@@ -22,6 +22,8 @@
   <button id="btnAddText" class="sub">テキストを追加</button>
   <button id="btnSaveTpl" class="sub">配置を保存</button>
   <button id="btnLoadTpl" class="sub">配置を読込</button>
+  <button id="btnCalib" class="sub">校正ページ</button>
+  <button id="btnPrint" class="sub">印刷用に開く</button>
   <button id="btnPdf" class="primary">PDFを作る</button>
   <input id="fileTpl" type="file" accept=".json,application/json" hidden>
 </header>
@@ -67,10 +69,17 @@
 
     <div class="panel">
       <h2>ズレの補正</h2>
-      <p class="muted small">試し刷りして実物とズレていたら、ズレた向きと量を入れてください。全部の要素がまとめて動きます。</p>
+      <p class="muted small">
+        実物とズレていたら、ズレた向きと量を入れてください（マイナスも可）。全部の要素がまとめて動きます。<br>
+        測り方が分からないときは、上の<b>「校正ページ」</b>を封筒に1枚刷ってください。使い方もその紙に書いてあります。
+      </p>
       <div class="row">
         <label>右へ <input id="offDx" type="number" step="0.5" value="0"> mm</label>
         <label>下へ <input id="offDy" type="number" step="0.5" value="0"> mm</label>
+      </div>
+      <div class="field" style="margin-top:8px">
+        <label>この値を測ったプリンタ（メモ）</label>
+        <input id="offPrinter" type="text" style="width:100%" placeholder="例: Brother MFC-J7300CDW 手差しトレイ">
       </div>
     </div>
 
@@ -98,6 +107,7 @@
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pdfout.js"></script>
+<script src="js/calib.js"></script>
 
 <!-- 封筒定義。封筒を増やすときはここに1行足す -->
 <script src="data/envelopes/naga3-mado.js"></script>

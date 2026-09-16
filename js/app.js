@@ -65,6 +65,40 @@
       });
     });
 
+    document.getElementById('offPrinter').addEventListener('input', function (e) {
+      App.store.offset().printer = e.target.value;
+      App.store.save();
+    });
+
+    document.getElementById('btnCalib').addEventListener('click', function () {
+      var btn = this;
+      btn.disabled = true;
+      App.calib.download().then(function (name) {
+        App.ui.toast(name + ' を保存しました。封筒に1枚だけ「実際のサイズ」で刷ってください。');
+      }).catch(function (e) {
+        App.ui.toast('校正ページを作れませんでした: ' + (e && e.message ? e.message : e), true);
+      }).then(function () { btn.disabled = false; });
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', function () {
+      if (App.data.loaded() && App.data.selectedCount() === 0) {
+        App.ui.toast('印刷する件にチェックが入っていません', true);
+        return;
+      }
+      // ボタンを押した瞬間にタブを開く(あとから開くとブラウザに止められる)
+      var win = window.open('', '_blank');
+      var btn = this;
+      btn.disabled = true;
+      App.pdf.openForPrint(win).then(function (how) {
+        App.ui.toast(how === 'opened'
+          ? '開いたタブで Ctrl+P。「実際のサイズ」で印刷してください。'
+          : 'ブラウザが新しいタブを止めたので、PDFを保存しました。開いて印刷してください。');
+      }).catch(function (e) {
+        if (win) win.close();
+        App.ui.toast('PDFを作れませんでした: ' + (e && e.message ? e.message : e), true);
+      }).then(function () { btn.disabled = false; });
+    });
+
     /* ---- 差し込みデータ ---- */
     var fileData = document.getElementById('fileData');
     document.getElementById('btnLoadData').addEventListener('click', function () { fileData.click(); });
@@ -163,5 +197,6 @@
     var off = App.store.offset();
     document.getElementById('offDx').value = off.dx || 0;
     document.getElementById('offDy').value = off.dy || 0;
+    document.getElementById('offPrinter').value = off.printer || '';
   }
 })();

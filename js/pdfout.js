@@ -72,6 +72,23 @@ App.pdf = {
     });
   },
 
+  /** PDFを作って新しいタブで開く(そのまま Ctrl+P で印刷できる)。
+      ブラウザに邪魔されないよう、タブはボタンを押した瞬間に開いておいて、
+      できあがったPDFを後からそのタブに読み込ませる。 */
+  openForPrint: function (win) {
+    var self = this;
+    return this.build().then(function (bytes) {
+      var blob = new Blob([bytes], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      if (win) { win.location.href = url; return 'opened'; }
+      var w2 = window.open(url, '_blank');
+      if (w2) return 'opened';
+      // ブラウザにポップアップを止められたときは、保存に切り替える(黙って失敗させない)
+      URL.revokeObjectURL(url);
+      return self.download().then(function () { return 'downloaded'; });
+    });
+  },
+
   /** PDFを作って保存する */
   download: function () {
     var env = App.store.envelope();
