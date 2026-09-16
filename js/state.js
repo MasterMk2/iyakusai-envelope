@@ -82,13 +82,19 @@ App.store = {
   },
 
   /** 速達の赤線を足す。
-      日本郵便のきまりでは 縦長の郵便物=右上部 / 横長の郵便物=右側部 に赤い線を入れる。
+      根拠: 内国郵便約款 第98条(速達郵便物の表示)
+        「その表面の右上部に朱色の横線(横に長い郵便物にあっては、右側部に朱色の縦線)を
+          明瞭に施すもの」
+      長さ・太さの数値指定は約款にも日本郵便の案内にも無く、「明瞭に」だけ。
+      そこで日本郵便の案内図の比率に合わせている(実測):
+        縦長 … 横線。長さ=封筒幅の約42%、太さ=封筒高さの約2.6%、最上部の右寄り
+        横長 … 縦線。長さ=封筒高さの約58%、太さ=封筒幅の約2%、右端の下寄り
+      細いと見落とされるので、太さは最低6mmを確保する。
       (2026-08に長3で一度まちがえた。長3窓付は差出人が横書きで左下にあるので横長扱い) */
   addExpressMark: function () {
     var env = this.envelope();
     var W = env.size_mm.w, H = env.size_mm.h;
     var pa = env.printable_area || { x: 5, y: 5, w: W - 10, h: H - 10 };
-    var yoko = W > H;   // 横長で使う封筒か
     var el = {
       id: 'el' + Date.now().toString(36),
       name: '速達の赤線',
@@ -96,17 +102,21 @@ App.store = {
       color: '#d40000',
       x: 0, y: 0, w: 0, h: 0
     };
-    if (yoko) {
-      // 右側部 = 右端に縦の赤線
-      el.w = 6; el.h = 45;
-      el.x = Math.min(W - 14, pa.x + pa.w - el.w - 1);
-      el.y = (H - el.h) / 2;
+
+    if (W > H) {
+      // 横長 → 右側部に縦線
+      el.w = Math.max(6, Math.round(W * 0.02 * 2) / 2);
+      el.h = Math.min(Math.round(H * 0.58), pa.h - 4);
+      el.x = pa.x + pa.w - el.w - 1;
+      el.y = pa.y + pa.h - el.h - 1;          // 案内図に合わせて下寄り
     } else {
-      // 右上部 = 右上に横の赤線
-      el.w = 45; el.h = 6;
-      el.x = Math.min(W - 60, pa.x + pa.w - el.w - 1);
-      el.y = Math.max(10, pa.y + 2);
+      // 縦長 → 右上部に横線
+      el.h = Math.max(6, Math.round(H * 0.027 * 2) / 2);
+      el.w = Math.min(Math.round(W * 0.42), pa.w - 6);
+      el.x = pa.x + pa.w - el.w - 3;
+      el.y = pa.y + 3;
     }
+
     this.elements().push(el);
     App.state.selectedId = el.id;
     this.save();

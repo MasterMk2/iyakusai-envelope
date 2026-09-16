@@ -120,7 +120,9 @@ App.ui = {
 
       var note = document.createElement('p');
       note.className = 'muted small';
-      note.textContent = '速達の赤線は、縦長の郵便物なら右上部、横長なら右側部に入れるきまりです。';
+      note.innerHTML = '速達の赤線は<b>「表面の右上部に朱色の横線（横に長い郵便物は右側部に朱色の縦線）を明瞭に施す」</b>' +
+        '（内国郵便約款 第98条）。長さ・太さの数値指定はないので、日本郵便の案内図の比率に合わせてあります。' +
+        '短くしすぎないでください。';
       body.appendChild(note);
       return;
     }

@@ -112,6 +112,46 @@ function run() {
         App.toCsvUrl('https://docs.google.com/spreadsheets/d/e/XYZ/pub?output=csv')
           === 'https://docs.google.com/spreadsheets/d/e/XYZ/pub?output=csv');
 
+  /* ---- 速達の赤線(内国郵便約款 第98条) ----
+     「表面の右上部に朱色の横線(横に長い郵便物は右側部に朱色の縦線)を明瞭に施す」。
+     長さ・太さの数値指定は約款に無いので、日本郵便の案内図の比率を下限として見張る。
+     ※ App.store を触るので、アプリの保存データを壊さないよう退避して戻す */
+  var STORAGE_KEY = 'iyakusai-envelope/v1';
+  var savedState = null;
+  try { savedState = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+
+  ['naga3-mado', 'kaku2'].forEach(function (envId) {
+    App.state.byEnvelope = {};
+    App.store.setEnvelope(envId);
+    App.store.elements().length = 0;
+    var mark = App.store.addExpressMark();
+    var env = App.envelopes[envId];
+    var pa = env.printable_area;
+    var yoko = env.size_mm.w > env.size_mm.h;
+    var lenPct = 100 * (yoko ? mark.h / env.size_mm.h : mark.w / env.size_mm.w);
+
+    check(env.name + ': 速達の赤線が' + (yoko ? '縦線' : '横線') + 'になる',
+          yoko ? (mark.h > mark.w) : (mark.w > mark.h),
+          mark.w + '×' + mark.h);
+    check(env.name + ': 赤線が' + (yoko ? '右側部' : '右上部') + 'にある',
+          yoko
+            ? near(mark.x + mark.w, pa.x + pa.w, 2)
+            : (near(mark.x + mark.w, pa.x + pa.w, 4) && mark.y < env.size_mm.h * 0.15),
+          'x=' + mark.x + ' y=' + mark.y);
+    check(env.name + ': 赤線の長さが案内図の比率(' + (yoko ? '高さの58%' : '幅の42%') + ')以上',
+          lenPct >= (yoko ? 55 : 39), lenPct.toFixed(0) + '%');
+    check(env.name + ': 赤線の太さが6mm以上(細いと見落とされる)',
+          Math.min(mark.w, mark.h) >= 6, Math.min(mark.w, mark.h));
+    check(env.name + ': 赤線が印刷可能範囲に収まる',
+          App.contains(pa, { x: mark.x, y: mark.y, w: mark.w, h: mark.h }),
+          JSON.stringify(mark));
+  });
+
+  try {
+    if (savedState === null) localStorage.removeItem(STORAGE_KEY);
+    else localStorage.setItem(STORAGE_KEY, savedState);
+  } catch (e) {}
+
   /* ---- 封筒の定義 ---- */
   Object.keys(App.envelopes).forEach(function (id) {
     var env = App.envelopes[id];
