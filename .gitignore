@@ -1,0 +1,25 @@
+# === 委員会の実データは絶対にコミットしない(Publicリポジトリのため) ===
+# 宛名・企業情報・金額を含みうるもの
+*.csv
+*.xlsx
+*.xls
+*.docx
+
+# 封筒の入稿データ・実物スキャン(委員会の制作物。数値だけを封筒定義JSONに写す)
+*.pdf
+
+# 例外: 架空データのサンプルだけは許可する
+!data/sample/**/*.csv
+!data/sample/**/*.xlsx
+
+# === OS / エディタ ===
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# === 作業用 ===
+tmp/
+out/
+参考資料/
