@@ -46,6 +46,10 @@
       App.render();
     });
 
+    document.getElementById('warnBadge').addEventListener('click', function () {
+      document.getElementById('checkPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
     document.getElementById('btnAddText').addEventListener('click', function () {
       App.store.addText();
       App.ui.refresh({ panel: true });
@@ -59,6 +63,46 @@
         App.store.save();
         App.ui.refresh({ panel: false });
       });
+    });
+
+    /* ---- 差し込みデータ ---- */
+    var fileData = document.getElementById('fileData');
+    document.getElementById('btnLoadData').addEventListener('click', function () { fileData.click(); });
+    fileData.addEventListener('change', function () {
+      var f = fileData.files[0];
+      if (!f) return;
+      App.data.load(f).then(function (n) {
+        App.ui.refresh({ panel: false, data: true });
+        App.ui.toast(f.name + ' から ' + n + '件を読み込みました');
+      }).catch(function (e) {
+        App.data.clear();
+        App.ui.refresh({ panel: false, data: true });
+        App.ui.toast('読み込めませんでした: ' + (e && e.message ? e.message : e), true);
+      });
+      fileData.value = '';
+    });
+
+    document.getElementById('btnClearData').addEventListener('click', function () {
+      App.data.clear();
+      App.ui.refresh({ panel: false, data: true });
+    });
+
+    document.getElementById('btnSelectAll').addEventListener('click', function () {
+      App.data.setAll(true);
+      App.ui.refresh({ panel: false, data: true });
+    });
+    document.getElementById('btnSelectNone').addEventListener('click', function () {
+      App.data.setAll(false);
+      App.ui.refresh({ panel: false, data: true });
+    });
+
+    document.getElementById('btnPrevRec').addEventListener('click', function () {
+      if (App.data.previewIndex > 0) App.data.previewIndex--;
+      App.ui.refresh({ panel: false, data: true });
+    });
+    document.getElementById('btnNextRec').addEventListener('click', function () {
+      if (App.data.previewIndex < App.data.records.length - 1) App.data.previewIndex++;
+      App.ui.refresh({ panel: false, data: true });
     });
 
     document.getElementById('btnSaveTpl').addEventListener('click', function () {
@@ -95,6 +139,10 @@
     });
 
     document.getElementById('btnPdf').addEventListener('click', function () {
+      if (App.data.loaded() && App.data.selectedCount() === 0) {
+        App.ui.toast('印刷する件にチェックが入っていません', true);
+        return;
+      }
       if (App.ui.hasWarnings() &&
           !confirm('点検で警告が出ています。このままPDFを作りますか?')) return;
       var btn = this;
@@ -108,7 +156,7 @@
       });
     });
 
-    App.ui.refresh({ panel: true });
+    App.ui.refresh({ panel: true, data: true });
   }
 
   function syncOffsetInputs() {

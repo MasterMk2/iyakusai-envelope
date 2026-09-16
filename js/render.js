@@ -80,7 +80,8 @@ function renderElement(el) {
     class: 'sv-elbox' + (on ? ' on' : '')
   }));
 
-  var lay = App.layout.build(el);
+  // 差し込みデータを読んでいれば、いま選んでいる1件を当てはめて表示する
+  var lay = App.layout.build(el, App.data.current());
   var f = App.fonts.get(el.font);
   var family = f ? f.def.family : 'sans-serif';
   var sizeMm = App.ptToMm(lay.sizePt);

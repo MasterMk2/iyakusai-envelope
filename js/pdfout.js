@@ -39,20 +39,27 @@ App.pdf = {
       return chain.then(function () {
         var wPt = App.mmToPt(env.size_mm.w);
         var hPt = App.mmToPt(env.size_mm.h);
-        var page = doc.addPage([wPt, hPt]);
 
-        els.forEach(function (el) {
-          var lay = App.layout.build(el);
-          var font = embeds[el.font || 'regular'];
-          var col = hexToRgb(el.color || '#111111');
-          lay.lines.forEach(function (ln) {
-            if (!ln.text) return;
-            page.drawText(ln.text, {
-              x: App.mmToPt(ln.x + (off.dx || 0)),
-              y: hPt - App.mmToPt(ln.baselineY + (off.dy || 0)),
-              size: lay.sizePt,
-              font: font,
-              color: PDFLibRef.rgb(col[0], col[1], col[2])
+        // 差し込みデータを読んでいれば、選んだ件数ぶんのページを作る。
+        // 読んでいなければ、いま画面に見えているものを1ページだけ作る。
+        var records = App.data.loaded() ? App.data.selectedRecords() : [null];
+        if (!records.length) records = [null];
+
+        records.forEach(function (rec) {
+          var page = doc.addPage([wPt, hPt]);
+          els.forEach(function (el) {
+            var lay = App.layout.build(el, rec);
+            var font = embeds[el.font || 'regular'];
+            var col = hexToRgb(el.color || '#111111');
+            lay.lines.forEach(function (ln) {
+              if (!ln.text) return;
+              page.drawText(ln.text, {
+                x: App.mmToPt(ln.x + (off.dx || 0)),
+                y: hPt - App.mmToPt(ln.baselineY + (off.dy || 0)),
+                size: lay.sizePt,
+                font: font,
+                color: PDFLibRef.rgb(col[0], col[1], col[2])
+              });
             });
           });
         });
@@ -68,8 +75,9 @@ App.pdf = {
   /** PDFを作って保存する */
   download: function () {
     var env = App.store.envelope();
+    var n = App.data.loaded() ? App.data.selectedCount() : 1;
     return this.build().then(function (bytes) {
-      var name = '封筒_' + env.name + '_' + ymd() + '.pdf';
+      var name = '封筒_' + env.name + '_' + n + '件_' + ymd() + '.pdf';
       var blob = new Blob([bytes], { type: 'application/pdf' });
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');

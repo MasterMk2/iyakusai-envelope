@@ -1,12 +1,15 @@
 /* 画面まわり: 要素一覧・プロパティ編集・ドラッグ・点検の表示。 */
 
 App.ui = {
-  /** 画面を描き直す。panel:true のときは右のプロパティ欄も作り直す(入力中は作り直さない) */
+  /** 画面を描き直す。
+      panel:true … 右のプロパティ欄も作り直す(文字を入力している最中は作り直さない)
+      data:true  … 差し込みデータの一覧も作り直す */
   refresh: function (opt) {
     opt = opt || {};
     App.render();
     this.buildList();
     if (opt.panel) this.buildPanel();
+    if (opt.data) this.buildDataPanel(); else this.updateRecordNav();
     this.runChecks();
   },
 
@@ -50,6 +53,7 @@ App.ui = {
     var body = document.getElementById('propBody');
     var el = App.store.selected();
     body.innerHTML = '';
+    this._contentTextarea = null;
     if (!el) {
       body.innerHTML = '<p class="muted">要素を選ぶとここで編集できます。</p>';
       return;
@@ -93,8 +97,9 @@ App.ui = {
     var ta = document.createElement('textarea');
     ta.rows = 5;
     ta.value = el.content || '';
-    field('文字(改行はそのまま反映されます)', ta);
+    field('文字(改行はそのまま反映されます。{{列名}} は差し込みデータで置き換わります)', ta);
     onEdit('content', ta);
+    this._contentTextarea = ta;   // 列名ボタンからの差し込み先
 
     // 位置とサイズ
     var pos = document.createElement('div');
@@ -222,15 +227,136 @@ App.ui = {
     });
   },
 
+  /* ---- 差し込みデータ ---- */
+  buildDataPanel: function () {
+    var d = App.data;
+    var info = document.getElementById('dataInfo');
+    var chips = document.getElementById('columnChips');
+    var list = document.getElementById('recordList');
+    var sheetRow = document.getElementById('sheetRow');
+
+    chips.innerHTML = '';
+    list.innerHTML = '';
+    sheetRow.innerHTML = '';
+    sheetRow.hidden = true;
+    document.getElementById('btnClearData').hidden = !d.loaded();
+    document.getElementById('dataButtons').hidden = !d.loaded();
+    document.getElementById('recordNav').hidden = !d.loaded();
+
+    if (!d.loaded()) {
+      info.innerHTML = '文字の中に <code>{{会社名}}</code> のように書いておくと、1件ずつ置き換わります。';
+      return;
+    }
+
+    var used = App.store.elements().some(function (el) {
+      return App.placeholdersIn(el.content || '').length > 0;
+    });
+    info.textContent = d.fileName + ' / ' + d.records.length + '件。' + (used
+      ? '下の列名を押すと、選んでいる要素の文字に差し込み欄が入ります。'
+      : 'まだ差し込み欄がありません。「要素」で宛名を選び、下の列名を押してください。');
+
+    // Excelでシートが複数あるときは選べるようにする
+    if (d.sheetNames.length > 1) {
+      sheetRow.hidden = false;
+      var lab = document.createElement('label');
+      lab.textContent = 'シート';
+      var sel = document.createElement('select');
+      d.sheetNames.forEach(function (n, i) {
+        var o = document.createElement('option');
+        o.value = i; o.textContent = n;
+        if (i === d.sheetIndex) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', function () {
+        d.useSheet(parseInt(sel.value, 10));
+        App.ui.refresh({ panel: false, data: true });
+      });
+      sheetRow.appendChild(lab);
+      sheetRow.appendChild(sel);
+    }
+
+    // 列名のボタン
+    d.columns.forEach(function (col) {
+      var b = document.createElement('button');
+      b.textContent = col;
+      b.title = '{{' + col + '}} を差し込む';
+      b.addEventListener('click', function () { App.ui.insertPlaceholder(col); });
+      chips.appendChild(b);
+    });
+
+    // 1件ずつの一覧(チェックを外した件は刷らない)
+    d.records.forEach(function (rec, i) {
+      var li = document.createElement('li');
+      li.dataset.index = i;
+      if (i === d.previewIndex) li.className = 'on';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!d.selected[i];
+      cb.addEventListener('change', function () {
+        d.selected[i] = cb.checked;
+        App.ui.updateRecordNav();
+        App.ui.runChecks();
+      });
+      li.appendChild(cb);
+
+      var no = document.createElement('span');
+      no.className = 'rno';
+      no.textContent = (i + 1) + '.';
+      li.appendChild(no);
+
+      var name = document.createElement('span');
+      name.className = 'rlabel';
+      name.textContent = d.labelOf(rec);
+      name.addEventListener('click', function () {
+        d.previewIndex = i;
+        App.ui.refresh({ panel: false, data: true });
+      });
+      li.appendChild(name);
+
+      list.appendChild(li);
+    });
+
+    this.updateRecordNav();
+  },
+
+  updateRecordNav: function () {
+    var d = App.data;
+    var lab = document.getElementById('recLabel');
+    if (!d.loaded()) { lab.textContent = ''; return; }
+    var rec = d.current();
+    lab.textContent = (d.previewIndex + 1) + ' / ' + d.records.length + '件目：' +
+      d.labelOf(rec) + '（印刷する件数 ' + d.selectedCount() + '）';
+  },
+
+  /** 列名のボタンを押したとき、文字の入力欄に {{列名}} を差し込む */
+  insertPlaceholder: function (col) {
+    var el = App.store.selected();
+    var ta = this._contentTextarea;
+    if (!el || !ta) {
+      this.toast('先に「要素」から、差し込みたいテキストを選んでください', true);
+      return;
+    }
+    var ins = '{{' + col + '}}';
+    var s = ta.selectionStart || 0, e = ta.selectionEnd || 0;
+    ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
+    ta.selectionStart = ta.selectionEnd = s + ins.length;
+    ta.focus();
+    el.content = ta.value;
+    App.store.save();
+    this.refresh({ panel: false });
+  },
+
   /* ---- 点検 ---- */
-  runChecks: function () {
+
+  /** 1件ぶんの点検。record が null なら差し込み無しの状態で見る */
+  checkRecord: function (record) {
     var env = App.store.envelope();
     var off = App.store.offset();
-    var ul = document.getElementById('checkList');
     var msgs = [];
 
     App.store.elements().forEach(function (el) {
-      var lay = App.layout.build(el);
+      var lay = App.layout.build(el, record);
       var label = el.name || '要素';
       var box = { x: el.x + (off.dx || 0), y: el.y + (off.dy || 0), w: el.w, h: el.h };
       var ink = lay.inkBox();
@@ -268,22 +394,110 @@ App.ui = {
       if (lay.missing.length) {
         msgs.push(label + ': この書体に無い文字があります → ' + lay.missing.join(' '));
       }
+
+      // 差し込みデータ側が空(宛名が欠けたまま刷る事故を防ぐ)
+      if (lay.emptyFields && lay.emptyFields.length) {
+        msgs.push(label + ': ' + lay.emptyFields.join('・') + ' が空です');
+      }
     });
+
+    return msgs;
+  },
+
+  /** 画面に見えている1件を点検して表示する。差し込みデータがあれば残りも少し遅れて点検する */
+  runChecks: function () {
+    var ul = document.getElementById('checkList');
+    var msgs = this.checkRecord(App.data.current());
 
     ul.innerHTML = '';
     if (!msgs.length) {
       var ok = document.createElement('li');
       ok.className = 'ok';
-      ok.textContent = '問題は見つかりませんでした。';
+      ok.textContent = App.data.loaded()
+        ? '表示中の1件は問題ありません。'
+        : '問題は見つかりませんでした。';
       ul.appendChild(ok);
+    } else {
+      msgs.forEach(function (m) {
+        var li = document.createElement('li');
+        li.className = 'ng';
+        li.textContent = '⚠ ' + m;
+        ul.appendChild(li);
+      });
+    }
+
+    this.updateWarnBadge(msgs.length, null);
+
+    // 全件の点検は件数ぶん時間がかかるので、入力が落ち着いてから走らせる
+    clearTimeout(this._batchTimer);
+    if (App.data.loaded()) {
+      this._batchTimer = setTimeout(function () { App.ui.runBatchChecks(); }, 400);
+    }
+  },
+
+  /** 上のバーに警告の数を出す(点検欄は下にあって見落とすため) */
+  updateWarnBadge: function (current, badRecords) {
+    var b = document.getElementById('warnBadge');
+    if (badRecords !== null && badRecords !== undefined) {
+      if (badRecords > 0) {
+        b.hidden = false;
+        b.textContent = '⚠ ' + badRecords + '件に警告';
+        return;
+      }
+      if (!current) { b.hidden = true; return; }
+    }
+    if (current > 0) {
+      b.hidden = false;
+      b.textContent = '⚠ 警告 ' + current + '件';
+    } else if (!App.data.loaded()) {
+      b.hidden = true;
+    }
+  },
+
+  /** 印刷する全件を点検し、問題のある件を一覧に出す */
+  runBatchChecks: function () {
+    var d = App.data;
+    var ul = document.getElementById('checkList');
+    var listItems = document.querySelectorAll('#recordList li');
+    var bad = [];
+
+    for (var i = 0; i < d.records.length; i++) {
+      if (listItems[i]) listItems[i].classList.remove('ng');
+      if (!d.selected[i]) continue;
+      var m = this.checkRecord(d.records[i]);
+      if (m.length) {
+        bad.push({ i: i, label: d.labelOf(d.records[i]), msgs: m });
+        if (listItems[i]) listItems[i].classList.add('ng');
+      }
+    }
+
+    var head = document.createElement('li');
+    var n = d.selectedCount();
+    this.updateWarnBadge(0, bad.length);
+    if (!bad.length) {
+      head.className = 'ok';
+      head.textContent = '印刷する' + n + '件すべて問題ありません。';
+      ul.appendChild(head);
+      this._batchBad = 0;
       return;
     }
-    msgs.forEach(function (m) {
+    head.className = 'ng';
+    head.textContent = '⚠ 印刷する' + n + '件のうち ' + bad.length + '件に警告があります';
+    ul.appendChild(head);
+
+    bad.slice(0, 8).forEach(function (b) {
       var li = document.createElement('li');
       li.className = 'ng';
-      li.textContent = '⚠ ' + m;
+      li.textContent = '　' + (b.i + 1) + '. ' + b.label + ' — ' + b.msgs.join(' / ');
       ul.appendChild(li);
     });
+    if (bad.length > 8) {
+      var more = document.createElement('li');
+      more.className = 'ng';
+      more.textContent = '　…ほか ' + (bad.length - 8) + '件（一覧で赤くなっている行）';
+      ul.appendChild(more);
+    }
+    this._batchBad = bad.length;
   },
 
   hasWarnings: function () {

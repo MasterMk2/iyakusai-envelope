@@ -4,15 +4,36 @@
 
    組み方のきまり:
      - 改行(\n)で行を分ける。自動折り返しはしない(封筒の宛名は自分で改行を決めた方が事故らない)
+     - {{列名}} は差し込みデータの値に置き換える
+     - 差し込みの結果が空になった行は消す(「部署役職」が空の会社で1行空くのを防ぐ)。
+       もともと空の行(意図的な1行あけ)はそのまま残す
      - 枠の幅に収まらない行があれば、収まるまでフォントサイズを 0.25pt ずつ下げる(min_size_pt まで)
      - 行送りは フォントサイズ × 行間
      - 各行のベースラインは 行の上端 + フォントの ascent */
 
 App.layout = {
-  build: function (el) {
+  /** el: 要素 / record: 差し込む1件(無ければ {{列名}} はそのまま残る) */
+  build: function (el, record) {
     var f = App.fonts.get(el.font);
-    var text = App.normalizeText(el.content || '');
-    var lines = text.split('\n');
+    var lines = (el.content || '').split('\n')
+      .map(function (line) {
+        var filled = App.fillPlaceholders(line, record);
+        // 空の列が混じった行は、余った区切りの空白を詰める
+        // (「{{氏名}}　{{敬称}}」で氏名が空 → 「　御中」ではなく「御中」にする)
+        var hasEmpty = record && App.placeholdersIn(line).some(function (k) {
+          return !String(record[k] === undefined ? '' : record[k]).trim();
+        });
+        if (hasEmpty) {
+          filled = filled.replace(/[ 　]{2,}/g, '　').replace(/^[ 　]+|[ 　]+$/g, '');
+        }
+        return { src: line, out: App.normalizeText(filled) };
+      })
+      .filter(function (o) {
+        // 差し込みで空になった行だけ落とす
+        return !(record && /\{\{/.test(o.src) && o.out.trim() === '');
+      })
+      .map(function (o) { return o.out; });
+    if (!lines.length) lines = [''];
     var boxWpt = App.mmToPt(el.w);
 
     var size = el.size_pt;
@@ -63,7 +84,11 @@ App.layout = {
       maxLineWmm: maxLineWmm,
       overflowW: maxLineWmm > el.w + 0.01,      // 最小サイズまで下げても入らなかった
       overflowH: blockHmm > el.h + 0.01,        // 行数が多くて枠の高さを超えた
-      missing: App.fonts.missingChars(text, el.font),
+      missing: App.fonts.missingChars(lines.join(''), el.font),
+      /** 差し込みデータ側が空だった列(宛名が欠けたまま刷る事故を防ぐ) */
+      emptyFields: record ? App.placeholdersIn(el.content || '').filter(function (k) {
+        return !String(record[k] === undefined ? '' : record[k]).trim();
+      }) : [],
       /** 実際に文字が載っている範囲(mm)。窓に収まるかの判定に使う */
       inkBox: function () {
         if (!out.length) return { x: el.x, y: el.y, w: 0, h: 0 };

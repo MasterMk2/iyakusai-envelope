@@ -54,6 +54,14 @@ button.primary:hover { filter: brightness(1.08); }
 button.sub { color: var(--text); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 
+.warn-badge {
+  background: var(--warn-bg);
+  border-color: #f0c38a;
+  color: var(--warn);
+  font-weight: 600;
+}
+.warn-badge:hover { background: #ffedd5; }
+
 select, input[type="text"], input[type="number"], textarea {
   font: inherit;
   padding: 5px 7px;
@@ -107,6 +115,26 @@ main { display: flex; align-items: flex-start; gap: 16px; padding: 16px; }
 .field > label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .row label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+/* 差し込みデータ */
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+.chips button {
+  padding: 3px 8px; font-size: 11px; border-radius: 999px;
+  background: var(--accent-weak); border-color: #c7d9f7; color: #12447f;
+}
+#recordList { list-style: none; margin: 8px 0 0; padding: 0; max-height: 230px; overflow: auto; font-size: 12px; }
+#recordList li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; }
+#recordList li:hover { background: #f0f2f5; }
+#recordList li.on { background: var(--accent-weak); }
+#recordList li .rlabel { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+#recordList li .rno { color: var(--muted); font-variant-numeric: tabular-nums; }
+#recordList li.ng .rlabel { color: var(--warn); }
+
+#recordNav { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+#recordNav button { padding: 4px 12px; font-size: 12px; }
+#recLabel { font-size: 12px; }
+
+code { background: #eef1f4; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
 
 #checkList { list-style: none; margin: 0; padding: 0; font-size: 12px; }
 #checkList li { padding: 5px 7px; border-radius: 5px; margin-bottom: 4px; }
