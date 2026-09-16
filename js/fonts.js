@@ -6,6 +6,13 @@
      - index.html を直接開いたとき … ブラウザがローカルの .ttf を読めないので、
        base64 にした fonts/*.ttf.b64.js を script タグで読み込む */
 
+/* フォントの置き場所は「このファイル(js/fonts.js)の1つ上」に決める。
+   こうしておくと tests/ のようにサブフォルダのHTMLから読み込んでも正しく辿れる。 */
+var APP_BASE = (function () {
+  var s = document.currentScript && document.currentScript.src;
+  return s ? s.replace(/js\/fonts\.js(\?.*)?$/, '') : '';
+})();
+
 App.fonts = {
   defs: [
     { id: 'regular', label: '標準', file: 'ZenKakuGothicNew-Regular.ttf', family: 'ZenKakuGothicNewApp' },
@@ -92,14 +99,14 @@ function readMetrics(fk) {
 }
 
 function loadFontBytes(file) {
-  return fetch('fonts/' + file)
+  return fetch(APP_BASE + 'fonts/' + file)
     .then(function (res) {
       if (!res.ok) throw new Error('status ' + res.status);
       return res.arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
     })
     .catch(function () {
       // file:// で開いた場合はここに来る。base64版を読む。
-      return loadScriptOnce('fonts/' + file + '.b64.js').then(function () {
+      return loadScriptOnce(APP_BASE + 'fonts/' + file + '.b64.js').then(function () {
         var b64 = (window.__FONT_B64 || {})[file];
         if (!b64) throw new Error('フォントを読み込めませんでした: ' + file);
         return base64ToBytes(b64);

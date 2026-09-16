@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>封筒印刷ツール — 自己テスト</title>
+<style>
+  body { font-family: "Yu Gothic UI", Meiryo, system-ui, sans-serif; margin: 24px; color: #1c1f23; }
+  h1 { font-size: 18px; }
+  #summary { font-size: 16px; font-weight: 600; margin: 12px 0 18px; }
+  .ok { color: #15803d; }
+  .ng { color: #b91c1c; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td { border-bottom: 1px solid #e5e7eb; padding: 5px 8px; vertical-align: top; }
+  td.res { width: 60px; font-weight: 600; }
+  td.detail { color: #6b7280; }
+  p.note { color: #6b7280; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>封筒印刷ツール — 自己テスト</h1>
+<p class="note">
+  コードを直したあと、このページを開くだけで主要な計算が壊れていないか確かめられます。<br>
+  <b>全部 PASS なら、少なくとも「文字の組み方・データの読み取り・封筒の値」は今までどおり動いています。</b><br>
+  ※ ローカルサーバ経由で開いてください（このフォルダの1つ上で <code>py -m http.server 8765</code> → <code>http://localhost:8765/tests/test.html</code>）
+</p>
+
+<div id="summary">実行中…</div>
+<table id="results"></table>
+
+<script src="../vendor/pdf-lib.min.js"></script>
+<script src="../vendor/fontkit.umd.min.js"></script>
+<script src="../vendor/xlsx.full.min.js"></script>
+<script src="../js/registry.js"></script>
+<script src="../js/units.js"></script>
+<script src="../js/fonts.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/underlay.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/state.js"></script>
+<script src="../data/envelopes/naga3-mado.js"></script>
+<script src="../data/envelopes/kaku2.js"></script>
+<script src="../data/templates/naga3-atena.js"></script>
+<script src="../data/templates/kaku2-atena.js"></script>
+<script src="test.js"></script>
+</body>
+</html>
