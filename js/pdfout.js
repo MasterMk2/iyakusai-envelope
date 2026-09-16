@@ -24,11 +24,14 @@ App.pdf = {
       Object.keys(used).forEach(function (fid) {
         chain = chain.then(function () {
           var bytes = App.fonts.get(fid).bytes;
-          return doc.embedFont(bytes, { subset: true })
-            .catch(function () {
-              // サブセット化に失敗する書体もあるので、そのときは丸ごと埋め込む
-              return doc.embedFont(bytes, { subset: false });
-            })
+          // ★ subset: false は必須。
+          //   pdf-lib のサブセット化(subset:true)はこの日本語フォントだと壊れ、
+          //   PDFの文字が虫食いになる(「〒930-0000」が「30-0000」になる等)。
+          //   厄介なことに、壊れていてもPDFからの文字列抽出は正常に見えるので、
+          //   直したときは必ず「画像にして目で見る」こと。
+          //   丸ごと埋め込むとPDFは1.5MBほどになるが、フォントは1つのPDFに1回しか
+          //   入らないので、25通まとめても同じくらいの大きさで済む。
+          return doc.embedFont(bytes, { subset: false })
             .then(function (f) { embeds[fid] = f; });
         });
       });
