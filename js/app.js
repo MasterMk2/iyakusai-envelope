@@ -129,6 +129,41 @@
       App.ui.refresh({ panel: false, data: true });
     });
 
+    // 貼り付け / スプレッドシートのURL
+    var pasteBox = document.getElementById('pasteBox');
+    document.getElementById('btnPasteData').addEventListener('click', function () {
+      pasteBox.hidden = !pasteBox.hidden;
+      if (!pasteBox.hidden) document.getElementById('pasteArea').focus();
+    });
+    document.getElementById('btnPasteCancel').addEventListener('click', function () {
+      pasteBox.hidden = true;
+    });
+    document.getElementById('btnPasteGo').addEventListener('click', function () {
+      var ta = document.getElementById('pasteArea');
+      try {
+        var n = App.data.loadFromText(ta.value, '貼り付けた表');
+        pasteBox.hidden = true;
+        ta.value = '';
+        App.ui.refresh({ panel: false, data: true });
+        App.ui.toast(n + '件を読み込みました');
+      } catch (e) {
+        App.ui.toast(e.message, true);
+      }
+    });
+    document.getElementById('btnUrlGo').addEventListener('click', function () {
+      var url = document.getElementById('sheetUrl').value;
+      if (!url.trim()) { App.ui.toast('URLを入れてください', true); return; }
+      var btn = this;
+      btn.disabled = true;
+      App.data.loadFromUrl(url).then(function (n) {
+        pasteBox.hidden = true;
+        App.ui.refresh({ panel: false, data: true });
+        App.ui.toast(n + '件を読み込みました');
+      }).catch(function (e) {
+        App.ui.toast(e.message, true);
+      }).then(function () { btn.disabled = false; });
+    });
+
     document.getElementById('btnSelectAll').addEventListener('click', function () {
       App.data.setAll(true);
       App.ui.refresh({ panel: false, data: true });

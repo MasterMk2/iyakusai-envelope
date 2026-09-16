@@ -45,9 +45,28 @@
       <h2>差し込みデータ</h2>
       <div class="row">
         <button id="btnLoadData" class="sub">CSV / Excel を読む</button>
+        <button id="btnPasteData" class="sub">貼り付けて読む</button>
         <button id="btnClearData" class="sub" hidden>読み込みをやめる</button>
       </div>
       <input id="fileData" type="file" accept=".csv,.xlsx,.xls" hidden>
+
+      <div id="pasteBox" hidden>
+        <p class="muted small" style="margin:8px 0 4px">
+          Googleスプレッドシートで<b>見出し行ごと</b>範囲を選んでコピー（Ctrl+C）し、ここに貼り付けてください。
+        </p>
+        <textarea id="pasteArea" rows="4" placeholder="〒	住所	会社名	…（1行目は見出し）"></textarea>
+        <div class="row" style="margin-top:6px">
+          <button id="btnPasteGo" class="sub">これを読む</button>
+          <button id="btnPasteCancel" class="sub">閉じる</button>
+        </div>
+        <p class="muted small" style="margin:10px 0 4px">
+          または「ウェブに公開」したスプレッドシートのURLから：
+        </p>
+        <div class="row">
+          <input id="sheetUrl" type="text" placeholder="https://docs.google.com/spreadsheets/..." style="flex:1;min-width:0">
+          <button id="btnUrlGo" class="sub">URLから読む</button>
+        </div>
+      </div>
       <p id="dataInfo" class="muted small">文字の中に <code>{{会社名}}</code> のように書いておくと、1件ずつ置き換わります。</p>
       <div id="sheetRow" class="field" hidden></div>
       <div id="columnChips" class="chips"></div>

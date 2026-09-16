@@ -71,6 +71,37 @@ App.data = {
     });
   },
 
+  /** コピーして貼り付けた表を読む(Googleスプレッドシートからのコピーはタブ区切り) */
+  loadFromText: function (text, name) {
+    if (!text || !text.trim()) throw new Error('中身が空です');
+    var head = text.split('\n')[0];
+    var rows = (head.indexOf('\t') >= 0) ? parseTsv(text) : parseCsv(text);
+    this.fileName = name || '貼り付けた表';
+    this.sheetNames = [];
+    this._raw = null;
+    this._setRows(rows);
+    if (!this.records.length) throw new Error('見出し行とデータ行が読み取れませんでした');
+    return this.records.length;
+  },
+
+  /** 「ウェブに公開」したスプレッドシートのURLから読む。
+     ブラウザの制限(CORS)で読めないことがあるので、そのときは貼り付けを案内する */
+  loadFromUrl: function (url) {
+    var self = this;
+    var csvUrl = toCsvUrl(url);
+    return fetch(csvUrl).then(function (res) {
+      if (!res.ok) throw new Error('status ' + res.status);
+      return res.text();
+    }).then(function (t) {
+      if (/^\s*<(!doctype|html)/i.test(t)) throw new Error('html');
+      return self.loadFromText(t, 'スプレッドシート');
+    }).catch(function () {
+      throw new Error('URLからは読めませんでした。シートが「ウェブに公開」されていないか、'
+        + 'ブラウザが他サイトの読み込みを止めています。'
+        + 'スプレッドシートで見出し行ごと範囲をコピーして「貼り付けて読む」を使うのが確実です。');
+    });
+  },
+
   /** Excelのシートを切り替える */
   useSheet: function (index) {
     if (!this._raw) return;
@@ -153,6 +184,24 @@ function decodeBytes(bytes) {
     // UTF-8として読めない = Excelが書き出したShift_JISのCSVとみなす
     return new TextDecoder('shift_jis').decode(bytes);
   }
+}
+
+/** タブ区切り(スプレッドシートからのコピー)の読み取り */
+function parseTsv(text) {
+  return text.replace(/\r\n?/g, '\n').split('\n').map(function (line) {
+    return line.split('\t');
+  });
+}
+
+/** スプレッドシートのURLを、CSVで取り出せるURLに直す(動作確認しやすいよう App にも出す) */
+App.toCsvUrl = toCsvUrl;
+function toCsvUrl(url) {
+  url = (url || '').trim();
+  if (/output=csv|format=csv/.test(url)) return url;            // すでにCSVのURL
+  var m = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/.exec(url);
+  if (!m) return url;
+  var gid = (/[#&?]gid=([0-9]+)/.exec(url) || [])[1] || '0';
+  return 'https://docs.google.com/spreadsheets/d/' + m[1] + '/export?format=csv&gid=' + gid;
 }
 
 /** ダブルクォート・セル内改行に対応したCSV読み取り */
