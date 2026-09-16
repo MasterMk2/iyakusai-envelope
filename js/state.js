@@ -81,6 +81,38 @@ App.store = {
     return el;
   },
 
+  /** 速達の赤線を足す。
+      日本郵便のきまりでは 縦長の郵便物=右上部 / 横長の郵便物=右側部 に赤い線を入れる。
+      (2026-08に長3で一度まちがえた。長3窓付は差出人が横書きで左下にあるので横長扱い) */
+  addExpressMark: function () {
+    var env = this.envelope();
+    var W = env.size_mm.w, H = env.size_mm.h;
+    var pa = env.printable_area || { x: 5, y: 5, w: W - 10, h: H - 10 };
+    var yoko = W > H;   // 横長で使う封筒か
+    var el = {
+      id: 'el' + Date.now().toString(36),
+      name: '速達の赤線',
+      type: 'rect',
+      color: '#d40000',
+      x: 0, y: 0, w: 0, h: 0
+    };
+    if (yoko) {
+      // 右側部 = 右端に縦の赤線
+      el.w = 6; el.h = 45;
+      el.x = Math.min(W - 14, pa.x + pa.w - el.w - 1);
+      el.y = (H - el.h) / 2;
+    } else {
+      // 右上部 = 右上に横の赤線
+      el.w = 45; el.h = 6;
+      el.x = Math.min(W - 60, pa.x + pa.w - el.w - 1);
+      el.y = Math.max(10, pa.y + 2);
+    }
+    this.elements().push(el);
+    App.state.selectedId = el.id;
+    this.save();
+    return el;
+  },
+
   remove: function (id) {
     var els = this.elements();
     for (var i = 0; i < els.length; i++) {

@@ -74,6 +74,20 @@ function renderElement(el) {
   var g = svg('g', { class: 'sv-el', 'data-id': el.id });
   var on = (App.state.selectedId === el.id);
 
+  // 図形(速達の赤線など)は塗るだけ
+  if (el.type === 'rect') {
+    g.appendChild(svg('rect', {
+      x: el.x, y: el.y, width: el.w, height: el.h, fill: el.color || '#d40000'
+    }));
+    if (on) {
+      g.appendChild(svg('rect', {
+        x: el.x - 1, y: el.y - 1, width: el.w + 2, height: el.h + 2, class: 'sv-elbox on'
+      }));
+    }
+    if (App.ui && App.ui.attachDrag) App.ui.attachDrag(g, el);
+    return g;
+  }
+
   // 枠(点線)。選択中は青くする
   g.appendChild(svg('rect', {
     x: el.x, y: el.y, width: el.w, height: el.h,

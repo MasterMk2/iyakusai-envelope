@@ -55,6 +55,14 @@
       App.ui.refresh({ panel: true });
     });
 
+    document.getElementById('btnAddExpress').addEventListener('click', function () {
+      App.store.addExpressMark();
+      App.ui.refresh({ panel: true });
+      App.ui.toast(App.store.envelope().size_mm.w > App.store.envelope().size_mm.h
+        ? '横長の郵便物なので、右側部(右端)に赤線を置きました'
+        : '縦長の郵便物なので、右上部に赤線を置きました');
+    });
+
     ['offDx', 'offDy'].forEach(function (id) {
       document.getElementById(id).addEventListener('input', function (e) {
         var v = parseFloat(e.target.value);

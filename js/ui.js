@@ -93,6 +93,37 @@ App.ui = {
       App.ui.buildList();
     });
 
+    // 図形(速達の赤線など)は、位置・大きさ・色だけ
+    if (el.type === 'rect') {
+      var rpos = document.createElement('div');
+      rpos.className = 'row';
+      [['x', '左から'], ['y', '上から'], ['w', '幅'], ['h', '高さ']].forEach(function (p) {
+        var lab = document.createElement('label');
+        lab.textContent = p[1];
+        var inp = document.createElement('input');
+        inp.type = 'number'; inp.step = '0.5'; inp.value = el[p[0]];
+        inp.style.width = '64px';
+        lab.appendChild(inp);
+        lab.appendChild(document.createTextNode('mm'));
+        rpos.appendChild(lab);
+        onEdit(p[0], inp, parseFloat);
+      });
+      field('位置と大きさ(封筒の左上からのmm)', rpos);
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'text';
+      colorInput.value = el.color || '#d40000';
+      colorInput.style.width = '120px';
+      field('色(#rrggbb)', colorInput);
+      onEdit('color', colorInput);
+
+      var note = document.createElement('p');
+      note.className = 'muted small';
+      note.textContent = '速達の赤線は、縦長の郵便物なら右上部、横長なら右側部に入れるきまりです。';
+      body.appendChild(note);
+      return;
+    }
+
     // 内容
     var ta = document.createElement('textarea');
     ta.rows = 5;
@@ -356,15 +387,17 @@ App.ui = {
     var msgs = [];
 
     App.store.elements().forEach(function (el) {
-      var lay = App.layout.build(el, record);
       var label = el.name || '要素';
       var box = { x: el.x + (off.dx || 0), y: el.y + (off.dy || 0), w: el.w, h: el.h };
-      var ink = lay.inkBox();
-      ink = { x: ink.x + (off.dx || 0), y: ink.y + (off.dy || 0), w: ink.w, h: ink.h };
-
-      // 枠に入りきらない
-      if (lay.overflowW) msgs.push(label + ': 最小サイズまで縮めても幅に入りません');
-      if (lay.overflowH) msgs.push(label + ': 行数が多く、枠の高さを超えています');
+      var lay = (el.type === 'rect') ? null : App.layout.build(el, record);
+      var ink = box;
+      if (lay) {
+        var ib = lay.inkBox();
+        ink = { x: ib.x + (off.dx || 0), y: ib.y + (off.dy || 0), w: ib.w, h: ib.h };
+        // 枠に入りきらない
+        if (lay.overflowW) msgs.push(label + ': 最小サイズまで縮めても幅に入りません');
+        if (lay.overflowH) msgs.push(label + ': 行数が多く、枠の高さを超えています');
+      }
 
       // 印刷可能範囲の外
       if (env.printable_area && !App.contains(env.printable_area, box)) {
@@ -390,14 +423,15 @@ App.ui = {
         }
       });
 
-      // フォントに無い文字
-      if (lay.missing.length) {
-        msgs.push(label + ': この書体に無い文字があります → ' + lay.missing.join(' '));
-      }
-
-      // 差し込みデータ側が空(宛名が欠けたまま刷る事故を防ぐ)
-      if (lay.emptyFields && lay.emptyFields.length) {
-        msgs.push(label + ': ' + lay.emptyFields.join('・') + ' が空です');
+      if (lay) {
+        // フォントに無い文字
+        if (lay.missing.length) {
+          msgs.push(label + ': この書体に無い文字があります → ' + lay.missing.join(' '));
+        }
+        // 差し込みデータ側が空(宛名が欠けたまま刷る事故を防ぐ)
+        if (lay.emptyFields && lay.emptyFields.length) {
+          msgs.push(label + ': ' + lay.emptyFields.join('・') + ' が空です');
+        }
       }
     });
 

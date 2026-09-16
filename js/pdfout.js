@@ -15,9 +15,12 @@ App.pdf = {
     return PDFLibRef.PDFDocument.create().then(function (doc) {
       doc.registerFontkit(window.fontkit);
 
-      // 使っている書体だけ埋め込む
+      // 使っている書体だけ埋め込む(図形しか無いなら1つも埋め込まない)
       var used = {};
-      els.forEach(function (el) { used[el.font || 'regular'] = true; });
+      els.forEach(function (el) {
+        if (el.type === 'rect') return;
+        used[el.font || 'regular'] = true;
+      });
 
       var embeds = {};
       var chain = Promise.resolve();
@@ -48,6 +51,18 @@ App.pdf = {
         records.forEach(function (rec) {
           var page = doc.addPage([wPt, hPt]);
           els.forEach(function (el) {
+            // 図形(速達の赤線など)
+            if (el.type === 'rect') {
+              var rc = hexToRgb(el.color || '#d40000');
+              page.drawRectangle({
+                x: App.mmToPt(el.x + (off.dx || 0)),
+                y: hPt - App.mmToPt(el.y + (off.dy || 0) + el.h),
+                width: App.mmToPt(el.w),
+                height: App.mmToPt(el.h),
+                color: PDFLibRef.rgb(rc[0], rc[1], rc[2])
+              });
+              return;
+            }
             var lay = App.layout.build(el, rec);
             var font = embeds[el.font || 'regular'];
             var col = hexToRgb(el.color || '#111111');
