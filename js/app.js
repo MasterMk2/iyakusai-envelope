@@ -147,6 +147,63 @@
       App.ui.refresh({ panel: false, data: true });
     });
 
+    /* ---- 下敷き(実物のスキャン) ---- */
+    var fileUnder = document.getElementById('fileUnder');
+    document.getElementById('btnLoadUnder').addEventListener('click', function () { fileUnder.click(); });
+    fileUnder.addEventListener('change', function () {
+      var f = fileUnder.files[0];
+      if (!f) return;
+      App.underlay.load(f).then(function (name) {
+        App.ui.buildUnderlayPanel();
+        App.ui.refresh({ panel: false });
+        App.ui.toast(name + ' を下敷きにしました。封筒の角に合うよう位置と幅を調整してください。');
+      }).catch(function (e) {
+        App.ui.toast(e.message, true);
+      });
+      fileUnder.value = '';
+    });
+
+    document.getElementById('btnFitUnder').addEventListener('click', function () {
+      App.underlay.fitToEnvelope();
+      App.ui.buildUnderlayPanel();
+      App.render();
+    });
+
+    document.getElementById('btnClearUnder').addEventListener('click', function () {
+      App.underlay.clear();
+      App.ui.buildUnderlayPanel();
+      App.render();
+    });
+
+    document.getElementById('underOpacity').addEventListener('input', function (e) {
+      App.underlay.geom().opacity = parseFloat(e.target.value);
+      App.store.save();
+      App.render();
+    });
+
+    [['underX', 'x'], ['underY', 'y']].forEach(function (p) {
+      document.getElementById(p[0]).addEventListener('input', function (e) {
+        var v = parseFloat(e.target.value);
+        if (isNaN(v)) return;
+        App.underlay.geom()[p[1]] = v;
+        App.store.save();
+        App.render();
+      });
+    });
+
+    document.getElementById('underW').addEventListener('input', function (e) {
+      var v = parseFloat(e.target.value);
+      if (isNaN(v) || v <= 0) return;
+      App.underlay.setWidth(v);
+      App.render();
+    });
+
+    document.getElementById('underAdjust').addEventListener('change', function (e) {
+      App.underlay.geom().adjust = e.target.checked;
+      App.store.save();
+      App.render();
+    });
+
     document.getElementById('btnSaveTpl').addEventListener('click', function () {
       var tpl = App.store.exportTemplate();
       var blob = new Blob([JSON.stringify(tpl, null, 2)], { type: 'application/json' });

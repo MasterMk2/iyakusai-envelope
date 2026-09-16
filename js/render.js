@@ -28,6 +28,21 @@ App.render = function () {
   // 封筒そのもの
   root.appendChild(svg('rect', { x: 0, y: 0, width: W, height: H, class: 'sv-envelope' }));
 
+  // 下敷き(実物のスキャン画像)。封筒の上・ガイドの下に敷く
+  if (App.underlay && App.underlay.loaded()) {
+    var u = App.underlay.geom();
+    var im = svg('image', {
+      x: u.x, y: u.y, width: u.w, height: u.h,
+      opacity: u.opacity,
+      preserveAspectRatio: 'none',
+      style: u.adjust ? 'cursor:move' : 'pointer-events:none'
+    });
+    im.setAttributeNS('http://www.w3.org/1999/xlink', 'href', App.underlay.img.src);
+    im.setAttribute('href', App.underlay.img.src);
+    if (u.adjust && App.ui && App.ui.attachUnderlayDrag) App.ui.attachUnderlayDrag(im);
+    root.appendChild(im);
+  }
+
   if (App.state.showGuides) {
     // 印刷可能範囲
     var pa = env.printable_area;

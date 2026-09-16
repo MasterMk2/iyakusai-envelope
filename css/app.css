@@ -17,6 +17,9 @@
 
 * { box-sizing: border-box; }
 
+/* display: flex などを当てた要素は hidden 属性だけでは消えないので、ここで確実に消す */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;

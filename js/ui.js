@@ -10,6 +10,7 @@ App.ui = {
     this.buildList();
     if (opt.panel) this.buildPanel();
     if (opt.data) this.buildDataPanel(); else this.updateRecordNav();
+    this.buildUnderlayPanel();
     this.runChecks();
   },
 
@@ -221,6 +222,46 @@ App.ui = {
         App.ui.refresh({ panel: false });
       });
     }
+  },
+
+  /* ---- 下敷き ---- */
+  buildUnderlayPanel: function () {
+    var on = App.underlay.loaded();
+    document.getElementById('btnFitUnder').hidden = !on;
+    document.getElementById('btnClearUnder').hidden = !on;
+    document.getElementById('underControls').hidden = !on;
+    if (!on) return;
+    var g = App.underlay.geom();
+    document.getElementById('underOpacity').value = g.opacity;
+    document.getElementById('underX').value = Math.round(g.x * 10) / 10;
+    document.getElementById('underY').value = Math.round(g.y * 10) / 10;
+    document.getElementById('underW').value = Math.round(g.w * 10) / 10;
+    document.getElementById('underAdjust').checked = !!g.adjust;
+  },
+
+  /** 下敷きをドラッグして動かす */
+  attachUnderlayDrag: function (node) {
+    node.addEventListener('pointerdown', function (ev) {
+      if (ev.button !== 0) return;
+      ev.preventDefault();
+      var g = App.underlay.geom();
+      var start = App.clientToMm(ev);
+      var ox = g.x, oy = g.y;
+      function move(e2) {
+        var now = App.clientToMm(e2);
+        g.x = Math.round((ox + now.x - start.x) * 10) / 10;
+        g.y = Math.round((oy + now.y - start.y) * 10) / 10;
+        App.render();
+      }
+      function up() {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        App.store.save();
+        App.ui.buildUnderlayPanel();
+      }
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    });
   },
 
   /* ---- ドラッグ ---- */
