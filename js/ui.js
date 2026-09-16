@@ -200,7 +200,22 @@ App.ui = {
     var vl = document.createElement('label'); vl.textContent = '縦'; vl.appendChild(vsel);
     alignRow.appendChild(vl);
     onEdit('valign', vsel);
-    field('枠の中での揃え', alignRow);
+
+    var vwrap = document.createElement('label');
+    vwrap.style.cssText = 'display:flex;gap:5px;align-items:center';
+    var vchk = document.createElement('input');
+    vchk.type = 'checkbox';
+    vchk.checked = !!el.vertical;
+    vwrap.appendChild(vchk);
+    vwrap.appendChild(document.createTextNode('縦書き'));
+    alignRow.appendChild(vwrap);
+    vchk.addEventListener('change', function () {
+      el.vertical = vchk.checked;
+      App.store.save();
+      App.ui.refresh({ panel: false });
+    });
+
+    field('枠の中での揃え（縦書きでは 横=行の寄せ / 縦=文字の始まり）', alignRow);
 
     // 窓に出すかどうか
     if ((env.windows || []).length) {

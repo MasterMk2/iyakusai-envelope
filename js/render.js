@@ -113,17 +113,19 @@ function renderElement(el) {
   var lay = App.layout.build(el, App.data.current());
   var f = App.fonts.get(el.font);
   var family = f ? f.def.family : 'sans-serif';
-  var sizeMm = App.ptToMm(lay.sizePt);
 
-  lay.lines.forEach(function (ln) {
-    if (!ln.text) return;
-    g.appendChild(svg('text', {
-      x: ln.x,
-      y: ln.baselineY,
+  lay.items.forEach(function (it) {
+    if (!it.text) return;
+    var t = svg('text', {
+      x: it.x,
+      y: it.y,
       'font-family': family,
-      'font-size': sizeMm,
+      'font-size': App.ptToMm(it.size),
       fill: el.color || '#111111'
-    }, ln.text));
+    }, it.text);
+    // 縦書きで寝かせる文字は、その場で90度回す
+    if (it.rot) t.setAttribute('transform', 'rotate(' + it.rot + ' ' + it.x + ' ' + it.y + ')');
+    g.appendChild(t);
   });
 
   // 当たり判定を枠全体に広げる(文字の無い所をつかんでも動かせるように)

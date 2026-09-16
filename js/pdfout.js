@@ -66,15 +66,18 @@ App.pdf = {
             var lay = App.layout.build(el, rec);
             var font = embeds[el.font || 'regular'];
             var col = hexToRgb(el.color || '#111111');
-            lay.lines.forEach(function (ln) {
-              if (!ln.text) return;
-              page.drawText(ln.text, {
-                x: App.mmToPt(ln.x + (off.dx || 0)),
-                y: hPt - App.mmToPt(ln.baselineY + (off.dy || 0)),
-                size: lay.sizePt,
+            lay.items.forEach(function (it) {
+              if (!it.text) return;
+              var opt = {
+                x: App.mmToPt(it.x + (off.dx || 0)),
+                y: hPt - App.mmToPt(it.y + (off.dy || 0)),
+                size: it.size,
                 font: font,
                 color: PDFLibRef.rgb(col[0], col[1], col[2])
-              });
+              };
+              // 縦書きで寝かせる文字(PDFのy軸は上向きなので回す向きが画面と逆)
+              if (it.rot) opt.rotate = PDFLibRef.degrees(-it.rot);
+              page.drawText(it.text, opt);
             });
           });
         });
