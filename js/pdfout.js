@@ -1,0 +1,94 @@
+/* PDFを作る。
+   ページの大きさは封筒の実寸そのもの。印刷するときは必ず
+   「実際のサイズ」「用紙に合わせる=OFF」で刷ること(縮小されると全部ズレる)。
+
+   画面と同じ App.layout.build() の結果を使うので、画面で合っていれば紙でも同じ位置に出る。
+   PDFのy座標は下から数える決まりなので、そこだけ変換している。 */
+
+App.pdf = {
+  build: function () {
+    var env = App.store.envelope();
+    var off = App.store.offset();
+    var els = App.store.elements();
+    var PDFLibRef = window.PDFLib;
+
+    return PDFLibRef.PDFDocument.create().then(function (doc) {
+      doc.registerFontkit(window.fontkit);
+
+      // 使っている書体だけ埋め込む
+      var used = {};
+      els.forEach(function (el) { used[el.font || 'regular'] = true; });
+
+      var embeds = {};
+      var chain = Promise.resolve();
+      Object.keys(used).forEach(function (fid) {
+        chain = chain.then(function () {
+          var bytes = App.fonts.get(fid).bytes;
+          return doc.embedFont(bytes, { subset: true })
+            .catch(function () {
+              // サブセット化に失敗する書体もあるので、そのときは丸ごと埋め込む
+              return doc.embedFont(bytes, { subset: false });
+            })
+            .then(function (f) { embeds[fid] = f; });
+        });
+      });
+
+      return chain.then(function () {
+        var wPt = App.mmToPt(env.size_mm.w);
+        var hPt = App.mmToPt(env.size_mm.h);
+        var page = doc.addPage([wPt, hPt]);
+
+        els.forEach(function (el) {
+          var lay = App.layout.build(el);
+          var font = embeds[el.font || 'regular'];
+          var col = hexToRgb(el.color || '#111111');
+          lay.lines.forEach(function (ln) {
+            if (!ln.text) return;
+            page.drawText(ln.text, {
+              x: App.mmToPt(ln.x + (off.dx || 0)),
+              y: hPt - App.mmToPt(ln.baselineY + (off.dy || 0)),
+              size: lay.sizePt,
+              font: font,
+              color: PDFLibRef.rgb(col[0], col[1], col[2])
+            });
+          });
+        });
+
+        doc.setTitle('封筒印刷 ' + env.name);
+        doc.setCreator('医薬祭 封筒印刷ツール');
+        doc.setProducer('医薬祭 封筒印刷ツール');
+        return doc.save();
+      });
+    });
+  },
+
+  /** PDFを作って保存する */
+  download: function () {
+    var env = App.store.envelope();
+    return this.build().then(function (bytes) {
+      var name = '封筒_' + env.name + '_' + ymd() + '.pdf';
+      var blob = new Blob([bytes], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      return name;
+    });
+  }
+};
+
+function hexToRgb(hex) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return [0.07, 0.08, 0.09];
+  return [parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255];
+}
+
+function ymd() {
+  var d = new Date();
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+}

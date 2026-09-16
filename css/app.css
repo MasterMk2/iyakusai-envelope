@@ -1,0 +1,135 @@
+/* 封筒印刷ツールの見た目。色は :root にまとめてあるのでここを変えれば全体が変わる。 */
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --line: #d8dbe0;
+  --text: #1c1f23;
+  --muted: #6b7280;
+  --accent: #1f6feb;
+  --accent-weak: #e8f0fe;
+  --warn: #b45309;
+  --warn-bg: #fff7ed;
+  --danger: #b91c1c;
+  --envelope: #ffffff;
+  --window: #dbeafe;
+  --preprinted: #eceff3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+}
+
+/* ---- 上のバー ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.bar h1 { font-size: 16px; margin: 0 8px 0 0; }
+.bar label { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.bar label.chk { cursor: pointer; }
+.bar .spacer { flex: 1; }
+
+button {
+  font: inherit;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+button:hover { background: #f0f2f5; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover { filter: brightness(1.08); }
+button.sub { color: var(--text); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+select, input[type="text"], input[type="number"], textarea {
+  font: inherit;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--text);
+}
+textarea { width: 100%; resize: vertical; line-height: 1.5; }
+input[type="number"] { width: 78px; }
+
+/* ---- 本体 ---- */
+main { display: flex; align-items: flex-start; gap: 16px; padding: 16px; }
+
+#canvasArea { flex: 1; min-width: 0; }
+#canvasWrap {
+  background: #9aa1ab;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+#canvasWrap svg { box-shadow: 0 2px 10px rgba(0,0,0,.25); background: var(--envelope); }
+.hint { color: var(--muted); font-size: 12px; margin: 8px 2px 0; }
+
+/* ---- 右パネル ---- */
+#side { width: 330px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.panel h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+#elementList { list-style: none; margin: 0; padding: 0; }
+#elementList li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 5px; cursor: pointer;
+}
+#elementList li:hover { background: #f0f2f5; }
+#elementList li.on { background: var(--accent-weak); }
+#elementList li .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#elementList li button { padding: 2px 8px; font-size: 12px; }
+
+.field { margin-bottom: 10px; }
+.field > label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+#checkList { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+#checkList li { padding: 5px 7px; border-radius: 5px; margin-bottom: 4px; }
+#checkList li.ng { background: var(--warn-bg); color: var(--warn); }
+#checkList li.ok { color: var(--muted); }
+
+/* ---- トースト ---- */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: #1c1f23; color: #fff; padding: 10px 18px; border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3); z-index: 10;
+}
+.toast.ng { background: var(--danger); }
+
+/* ---- SVGの中身 ---- */
+.sv-envelope { fill: var(--envelope); stroke: #333; stroke-width: .3; }
+.sv-printable { fill: none; stroke: #9aa1ab; stroke-width: .25; stroke-dasharray: 2 1.5; }
+.sv-window { fill: var(--window); stroke: #60a5fa; stroke-width: .3; }
+.sv-window-safe { fill: none; stroke: #2563eb; stroke-width: .2; stroke-dasharray: 1.2 1.2; }
+.sv-preprinted { fill: var(--preprinted); stroke: #c4c9d0; stroke-width: .25; }
+.sv-watermark { fill: none; stroke: #d6dbe1; stroke-width: .25; stroke-dasharray: 3 2; }
+.sv-guide-label { fill: #6b7280; font-size: 3px; font-family: sans-serif; }
+.sv-elbox { fill: none; stroke: #9ca3af; stroke-width: .2; stroke-dasharray: 1 1; }
+.sv-elbox.on { stroke: var(--accent); stroke-width: .4; stroke-dasharray: none; }
+.sv-el { cursor: move; }
+.sv-el text { white-space: pre; }

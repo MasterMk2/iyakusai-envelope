@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>封筒印刷ツール — 医薬祭実行委員会</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="bar">
+  <h1>封筒印刷ツール</h1>
+  <label>封筒
+    <select id="envelopeSelect"></select>
+  </label>
+  <label>倍率
+    <input id="zoom" type="range" min="1.5" max="6" step="0.1" value="3">
+  </label>
+  <label class="chk"><input id="showGuides" type="checkbox" checked> ガイドを表示</label>
+  <span class="spacer"></span>
+  <button id="btnAddText" class="sub">テキストを追加</button>
+  <button id="btnSaveTpl" class="sub">配置を保存</button>
+  <button id="btnLoadTpl" class="sub">配置を読込</button>
+  <button id="btnPdf" class="primary">PDFを作る</button>
+  <input id="fileTpl" type="file" accept=".json,application/json" hidden>
+</header>
+
+<main>
+  <section id="canvasArea">
+    <div id="canvasWrap"><!-- SVGをここに描く --></div>
+    <p id="hint" class="hint">要素をドラッグすると動きます。細かい位置は右のパネルに mm で入れてください。</p>
+  </section>
+
+  <aside id="side">
+    <div class="panel">
+      <h2>要素</h2>
+      <ul id="elementList"></ul>
+    </div>
+
+    <div class="panel" id="propPanel">
+      <h2>選択中の要素</h2>
+      <div id="propBody"><p class="muted">要素を選ぶとここで編集できます。</p></div>
+    </div>
+
+    <div class="panel">
+      <h2>ズレの補正</h2>
+      <p class="muted small">試し刷りして実物とズレていたら、ズレた向きと量を入れてください。全部の要素がまとめて動きます。</p>
+      <div class="row">
+        <label>右へ <input id="offDx" type="number" step="0.5" value="0"> mm</label>
+        <label>下へ <input id="offDy" type="number" step="0.5" value="0"> mm</label>
+      </div>
+    </div>
+
+    <div class="panel" id="checkPanel">
+      <h2>点検</h2>
+      <ul id="checkList"><li class="muted">—</li></ul>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+
+<!-- 外部ライブラリ(vendor/ に同梱。ネットに取りに行かない) -->
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+
+<!-- アプリ本体 -->
+<script src="js/registry.js"></script>
+<script src="js/units.js"></script>
+<script src="js/fonts.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/pdfout.js"></script>
+
+<!-- 封筒定義。封筒を増やすときはここに1行足す -->
+<script src="data/envelopes/naga3-mado.js"></script>
+<script src="data/envelopes/kaku2.js"></script>
+
+<!-- 初期テンプレート(最初に開いたときの配置) -->
+<script src="data/templates/naga3-atena.js"></script>
+<script src="data/templates/kaku2-atena.js"></script>
+
+<script src="js/app.js"></script>
+</body>
+</html>
